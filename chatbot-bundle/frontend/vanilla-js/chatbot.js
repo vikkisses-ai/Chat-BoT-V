@@ -139,33 +139,7 @@
   var form       = root.querySelector(".agx-input-row");
   var toggleBtn  = root.querySelector(".agx-toggle-size");
 
-  /* ── Wheel scroll fix: hover-scroll inside the messages div ── */
-  msgsEl.addEventListener("wheel", function (e) {
-    var atTop    = msgsEl.scrollTop === 0 && e.deltaY < 0;
-    var atBottom = msgsEl.scrollTop + msgsEl.clientHeight >= msgsEl.scrollHeight - 1 && e.deltaY > 0;
-    if (!atTop && !atBottom) {
-      e.preventDefault();
-      e.stopPropagation();
-      msgsEl.scrollTop += e.deltaY;
-    }
-  }, { passive: false, capture: true });
 
-  /* Touch scroll inside messages */
-  var _touchY = 0;
-  msgsEl.addEventListener("touchstart", function (e) {
-    _touchY = e.touches[0].clientY;
-  }, { passive: true });
-
-  msgsEl.addEventListener("touchmove", function (e) {
-    var dy = _touchY - e.touches[0].clientY;
-    _touchY = e.touches[0].clientY;
-    var atTop    = msgsEl.scrollTop === 0 && dy < 0;
-    var atBottom = msgsEl.scrollTop + msgsEl.clientHeight >= msgsEl.scrollHeight - 1 && dy > 0;
-    if (!atTop && !atBottom) {
-      e.stopPropagation();
-      msgsEl.scrollTop += dy;
-    }
-  }, { passive: false });
 
   /* Animated rotating placeholder */
   var phIndex = 0, phChar = 0, phMode = "typing";
