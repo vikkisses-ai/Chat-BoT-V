@@ -10,23 +10,22 @@
  *   - Session persists across minimize/maximize/close; clears only on page refresh/close
  */
 (function () {
-  if (window.__agxChatLoaded) return;
-  window.__agxChatLoaded = true;
+  if (document.querySelector(".agx-chat-root")) return;
 
   var script = document.currentScript || (function () {
     var s = document.getElementsByTagName("script");
-    return s[s.length - 1];
+    return s.length ? s[s.length - 1] : null;
   })();
-  var ENDPOINT = script.getAttribute("data-endpoint") || "/chat";
-  var TITLE = script.getAttribute("data-title") || "Agilisium AI";
-  var BRAND = script.getAttribute("data-brand") || "Ask Agilisium AI";
+  var ENDPOINT = (script && script.getAttribute("data-endpoint")) || "/chat";
+  var TITLE = (script && script.getAttribute("data-title")) || "Agilisium AI";
+  var BRAND = (script && script.getAttribute("data-brand")) || "Ask Agilisium AI";
 
-  /* Inject CSS */
-  if (!document.querySelector('link[href*="chatbot.css"]')) {
-    var basePath = script.src.replace(/chatbot\.js.*$/, "");
+  /* Inject CSS if not already present */
+  if (!document.querySelector('link[href*="chatbot.css"]') && !document.querySelector('link[href*="styles.css"]')) {
+    var basePath = (script && script.src) ? script.src.replace(/chatbot\.js.*$/, "") : "";
     var link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = basePath + "chatbot.css";
+    link.href = basePath ? (basePath + "chatbot.css") : "chatbot.css";
     document.head.appendChild(link);
   }
 
@@ -104,10 +103,11 @@
     return "<p>" + s + "</p>";
   }
 
-  /* DOM */
-  var root = document.createElement("div");
-  root.className = "agx-chat-root";
-  root.setAttribute("data-state", state);
+  function initChatbot() {
+    /* DOM */
+    var root = document.createElement("div");
+    root.className = "agx-chat-root";
+    root.setAttribute("data-state", state);
   root.innerHTML = '\
     <div class="agx-pill" role="region" aria-label="' + escapeHtml(BRAND) + '">\
       <button class="agx-pill-brand" type="button" aria-label="Open chat">\
@@ -368,5 +368,13 @@
     }
   }
 
-  form.addEventListener("submit", function (e) { e.preventDefault(); send(); });
+    form.addEventListener("submit", function (e) { e.preventDefault(); send(); });
+  }
+
+  // Defer initialization if document body is not ready
+  if (document.readyState === "loading" || !document.body) {
+    document.addEventListener("DOMContentLoaded", initChatbot);
+  } else {
+    initChatbot();
+  }
 })();
