@@ -32,6 +32,17 @@
 
   /* ── Session Storage helpers ── */
   var SESSION_KEY = "__agxMessages";
+  var STATE_KEY = "__agxState";
+
+  // Clear session if it's a manual page refresh (so it starts fresh)
+  // but keep it if it's a navigation across the website's pages.
+  try {
+    var navEntries = performance.getEntriesByType("navigation");
+    if (navEntries.length > 0 && navEntries[0].type === "reload") {
+      sessionStorage.removeItem(SESSION_KEY);
+      sessionStorage.removeItem(STATE_KEY);
+    }
+  } catch (e) {}
 
   function loadMessages() {
     try {
@@ -55,8 +66,12 @@
   }
 
   /* State */
-  var state = "minimized"; // minimized | expanded | fullscreen
-  var messages = loadMessages(); /* CHANGED: load from sessionStorage on init */
+  var state = "minimized";
+  try {
+    state = sessionStorage.getItem(STATE_KEY) || "minimized";
+  } catch (e) {}
+
+  var messages = loadMessages(); /* load from sessionStorage on init */
   var streaming = false;
 
   /* Rotating placeholder phrases */
@@ -92,7 +107,7 @@
   /* DOM */
   var root = document.createElement("div");
   root.className = "agx-chat-root";
-  root.setAttribute("data-state", "minimized");
+  root.setAttribute("data-state", state);
   root.innerHTML = '\
     <div class="agx-pill" role="region" aria-label="' + escapeHtml(BRAND) + '">\
       <button class="agx-pill-brand" type="button" aria-label="Open chat">\
@@ -215,12 +230,13 @@
   function setState(s) {
     var prev = state;
     state = s;
+    try { sessionStorage.setItem(STATE_KEY, s); } catch (e) {}
+    
     root.setAttribute("data-state", s);
     lockBodyScroll(s !== "minimized");
 
     if (s === "minimized") {
-      /* CHANGED: do NOT clear messages — just clear the input field.
-         Session persists until page refresh or tab close (sessionStorage). */
+      /* Session persists until page refresh or tab close */
       input.value = "";
     } else {
       if (prev === "minimized") {
@@ -230,6 +246,13 @@
     }
     updateToggleIcon();
   }
+
+  /* Apply initial state on load */
+  if (state !== "minimized") {
+    renderAll();
+    lockBodyScroll(true);
+  }
+  updateToggleIcon();
 
   /* Pill interactions */
   pillBrand.addEventListener("click", function () { setState("fullscreen"); });
